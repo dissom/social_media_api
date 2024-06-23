@@ -43,7 +43,7 @@ class UserManager(DjangoUserManager):
 class User(AbstractUser):
     """User model."""
 
-    username = None
+    username = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(_("email address"), unique=True)
 
     USERNAME_FIELD = "email"
