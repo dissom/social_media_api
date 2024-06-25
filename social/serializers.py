@@ -29,18 +29,15 @@ class UserProfileDetailSerializer(UserProfileSerializer):
         read_only=True,
         slug_field="username"
     )
-    followers = serializers.SerializerMethodField()
-    following = serializers.SerializerMethodField()
+   
+    user_followers = serializers.SerializerMethodField()
+    user_following = serializers.SerializerMethodField()
 
-    def get_followers(self, obj):
-        from user.serializers import UserFollowingSerializer
-        followers = obj.followers.all()
-        return UserFollowingSerializer(followers, many=True).data
+    def get_user_followers(self, obj):
+        return [follower.owner.username for follower in obj.followers.all()]
 
-    def get_following(self, obj):
-        from user.serializers import UserFollowingSerializer
-        following = obj.following.all()
-        return UserFollowingSerializer(following, many=True).data
+    def get_user_following(self, obj):
+        return [following.owner.username for following in obj.following.all()]
 
     class Meta:
         model = UserProfile
@@ -56,8 +53,8 @@ class UserProfileDetailSerializer(UserProfileSerializer):
             "social_links",
             "created_at",
             "updated_at",
-            "followers",
-            "following",
+            "user_followers",
+            "user_following",
         )
         read_only_fields = ("owner", "creared_at", "updated_at")
 
