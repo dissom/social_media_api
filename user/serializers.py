@@ -10,7 +10,7 @@ from social.serializers import UserProfileSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer()
+    profile = UserProfileSerializer(required=True)
 
     class Meta:
         model = get_user_model()
@@ -40,6 +40,11 @@ class UserSerializer(serializers.ModelSerializer):
                 "style": {"input_type": "password"},
             }
         }
+
+    def validate_profile(self, value):
+        if not value:
+            raise serializers.ValidationError("Profile data is required.")
+        return value
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -100,3 +105,9 @@ class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ("id", "email", "password")
+
+
+class UserFollowingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username')
