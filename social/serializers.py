@@ -67,13 +67,11 @@ class UserProfileListSerializerView(UserProfileDetailSerializer):
         read_only=True,
         slug_field="username"
     )
-    followers = serializers.SerializerMethodField()
-    following = serializers.SerializerMethodField()
-
-    def get_followers(self, obj):
-        followers = obj.followers.count()
-        return followers
-
-    def get_following(self, obj):
-        following = obj.following.count()
-        return following
+    followers = serializers.IntegerField(
+        read_only=True,
+        source="followers.count"
+    )
+    following = serializers.IntegerField(
+        read_only=True,
+        source="following.count"
+    )
