@@ -1,5 +1,5 @@
 from django.db.models import Q
-from rest_framework import viewsets, status
+from rest_framework import generics, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from social.models import UserProfile
 from social.serializers import (
     FollowUnfollowSerializer,
+    SocialLinkSerializer,
     UserProfileDetailSerializer,
     UserProfileListSerializerView,
     UserProfileSerializer,
@@ -79,5 +80,34 @@ class FollowUnfollowViewSet(APIView):
                 "message": f"Successfully {action}ed "
                 f"{self.other_profile(user_id)}"
             },
+            status=status.HTTP_200_OK
+        )
+
+
+class AddSocialLinkView(generics.UpdateAPIView):
+    serializer_class = SocialLinkSerializer
+
+    def get_queryset(self):
+        return UserProfile.objects.filter(owner=self.request.user)
+
+    def put(self, request, *args, **kwargs):
+        profile = get_object_or_404(
+            UserProfile, owner=request.user
+        )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_link = serializer.validated_data
+
+        if profile.social_links:
+            social_links = profile.social_links
+        else:
+            social_links = []
+
+        social_links.append(new_link)
+        profile.social_links = social_links
+        profile.save()
+
+        return Response(
+            {"status": "social link added"},
             status=status.HTTP_200_OK
         )

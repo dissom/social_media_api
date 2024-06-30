@@ -92,6 +92,11 @@ class UserProfileListSerializerView(serializers.ModelSerializer):
         read_only_fields = ("owner", "creared_at", "updated_at")
 
 
+class SocialLinkSerializer(serializers.Serializer):
+    platform = serializers.CharField(max_length=255)
+    link = serializers.URLField()
+
+
 class FollowUnfollowSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField()
     action = serializers.ChoiceField(choices=["follow", "unfollow"])
