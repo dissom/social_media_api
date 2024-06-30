@@ -14,6 +14,15 @@ def profile_image_path(instance, filename):
     )
 
 
+def post_image_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    upload_datetime = datetime.now().strftime("%Y%m%d%H%M")
+    return os.path.join(
+        "post, images",
+        f"{slugify(instance.owner)}" f"--{upload_datetime}{extension}",
+    )
+
+
 class UserProfile(models.Model):
 
     owner = models.OneToOneField(
@@ -41,9 +50,6 @@ class UserProfile(models.Model):
     phone_number = models.CharField(
         max_length=20, null=True, blank=True
     )
-    social_links = models.JSONField(
-        null=True, blank=True,
-    )
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
@@ -61,13 +67,17 @@ class UserProfile(models.Model):
         return self.owner.username
 
 
-def post_image_path(instance, filename):
-    _, extension = os.path.splitext(filename)
-    upload_datetime = datetime.now().strftime("%Y%m%d%H%M")
-    return os.path.join(
-        "post, images",
-        f"{slugify(instance.owner)}" f"--{upload_datetime}{extension}",
+class SocialLink(models.Model):
+    profile = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name="social_links"
     )
+    platform = models.CharField(max_length=255)
+    url = models.URLField(max_length=255)
+
+    def __str__(self):
+        return f"{self.platform}: {self.url}"
 
 
 class Post(models.Model):

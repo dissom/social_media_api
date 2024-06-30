@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 from social.views import (
-    AddSocialLinkView,
+    # AddSocialLinkView,
     FollowUnfollowViewSet,
     UserProfileView,
 )
@@ -17,11 +17,6 @@ urlpatterns = [
         "follow-unfollow/",
         FollowUnfollowViewSet.as_view(),
         name="follow_user"
-    ),
-    path(
-        "add-social-link/",
-        AddSocialLinkView.as_view(),
-        name="add-social-link"
     ),
 ]
 

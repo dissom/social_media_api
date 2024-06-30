@@ -1,11 +1,22 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from social.models import UserProfile
+from social.models import SocialLink, UserProfile
 from user.models import User
 
 
+class SocialLinkSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SocialLink
+        fields = (
+            "platform",
+            "url",
+        )
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    social_links = SocialLinkSerializer(many=True, read_only=False)
 
     class Meta:
         model = UserProfile
@@ -22,12 +33,51 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("owner", "creared_at", "updated_at")
+        read_only_fields = ("owner", "created_at", "updated_at")
+
+    def create(self, validated_data):
+        social_links_data = validated_data.pop("social_links", None)
+
+        profile = UserProfile.objects.create(**validated_data)
+
+        for link_data in social_links_data:
+            SocialLink.objects.create(profile=profile, **link_data)
+
+        return profile
+
+    def update(self, instance, validated_data):
+        social_links_data = validated_data.pop("social_links", None)
+
+        instance.profile_picture = validated_data.get(
+            "profile_picture", instance.profile_picture
+        )
+        instance.bio = validated_data.get(
+            "bio", instance.bio
+        )
+        instance.birth_date = validated_data.get(
+            "birth_date", instance.birth_date
+        )
+        instance.location = validated_data.get(
+            "location", instance.location
+        )
+        instance.website = validated_data.get(
+            "website", instance.website
+        )
+        instance.phone_number = validated_data.get(
+            "phone_number", instance.phone_number
+        )
+        instance.save()
+
+        for link_data in social_links_data:
+            SocialLink.objects.create(profile=instance, **link_data)
+
+        return instance
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):
 
     owner = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    social_links = SocialLinkSerializer(many=True, read_only=True)
 
     user_followers = serializers.SerializerMethodField()
     user_following = serializers.SerializerMethodField()
@@ -63,6 +113,7 @@ class UserProfileListSerializerView(serializers.ModelSerializer):
         read_only=True,
         slug_field="username"
     )
+    social_links = SocialLinkSerializer(many=True, read_only=True)
     followers_count = serializers.IntegerField(
         read_only=True,
         source="followers.count"
@@ -90,11 +141,6 @@ class UserProfileListSerializerView(serializers.ModelSerializer):
             "following_count",
         )
         read_only_fields = ("owner", "creared_at", "updated_at")
-
-
-class SocialLinkSerializer(serializers.Serializer):
-    platform = serializers.CharField(max_length=255)
-    link = serializers.URLField()
 
 
 class FollowUnfollowSerializer(serializers.ModelSerializer):
