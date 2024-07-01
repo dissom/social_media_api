@@ -28,7 +28,7 @@ class UserProfileView(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        """Retrieve porfiles with filters by owner"""
+        """Retrieve profiles with filters by owner"""
         queryset = self.queryset.filter(
             Q(owner=self.request.user.id)
             | Q(followers=self.request.user.id)
@@ -67,7 +67,7 @@ class UserProfileView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class FollowUnfollowViewSet(APIView):
+class FollowUnfollowView(APIView):
     serializer_class = FollowUnfollowSerializer
 
     def other_profile(self, pk):
