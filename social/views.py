@@ -103,7 +103,9 @@ class PostViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        """Retrieve posts filtered by following users, with serch by hashtags"""
+        """
+        Retrieve posts filtered by following users, with search by hashtags
+        """
         queryset = self.queryset
         user = self.request.user
 

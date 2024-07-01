@@ -9,7 +9,7 @@ from social.views import (
 
 router = routers.DefaultRouter()
 router.register("profiles", UserProfileView, basename="profile")
-router.register('posts', PostViewSet)
+router.register("posts", PostViewSet)
 
 
 urlpatterns = [

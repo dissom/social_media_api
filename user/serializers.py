@@ -110,4 +110,4 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserFollowingSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username')
+        fields = ("id", "username")
