@@ -1,14 +1,15 @@
 from django.urls import path, include
 from rest_framework import routers
 from social.views import (
-    # AddSocialLinkView,
     FollowUnfollowViewSet,
+    PostViewSet,
     UserProfileView,
 )
 
 
 router = routers.DefaultRouter()
 router.register("profiles", UserProfileView, basename="profile")
+router.register('posts', PostViewSet)
 
 
 urlpatterns = [

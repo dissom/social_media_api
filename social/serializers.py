@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from social.models import SocialLink, UserProfile
+from social.models import Post, SocialLink, UserProfile
 from user.models import User
 
 
@@ -16,7 +16,11 @@ class SocialLinkSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    social_links = SocialLinkSerializer(many=True, read_only=False)
+    social_links = SocialLinkSerializer(
+        many=True,
+        read_only=False,
+        required=False
+    )
 
     class Meta:
         model = UserProfile
@@ -35,43 +39,32 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("owner", "created_at", "updated_at")
 
-    def create(self, validated_data):
-        social_links_data = validated_data.pop("social_links", None)
+    def create(self, validated_data) -> UserProfile:
+        social_links_data = validated_data.pop("social_links")
 
         profile = UserProfile.objects.create(**validated_data)
-
-        for link_data in social_links_data:
-            SocialLink.objects.create(profile=profile, **link_data)
+        self._create_or_update_social_links(profile, social_links_data)
 
         return profile
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data) -> UserProfile:
         social_links_data = validated_data.pop("social_links", None)
 
-        instance.profile_picture = validated_data.get(
-            "profile_picture", instance.profile_picture
-        )
-        instance.bio = validated_data.get(
-            "bio", instance.bio
-        )
-        instance.birth_date = validated_data.get(
-            "birth_date", instance.birth_date
-        )
-        instance.location = validated_data.get(
-            "location", instance.location
-        )
-        instance.website = validated_data.get(
-            "website", instance.website
-        )
-        instance.phone_number = validated_data.get(
-            "phone_number", instance.phone_number
-        )
-        instance.save()
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
-        for link_data in social_links_data:
-            SocialLink.objects.create(profile=instance, **link_data)
+        instance.save()
+        instance.social_links.all().delete()
+        self._create_or_update_social_links(instance, social_links_data)
 
         return instance
+
+    def _create_or_update_social_links(self, profile, social_links_data):
+        if social_links_data:
+            SocialLink.objects.bulk_create(
+                [SocialLink(profile=profile, **link_data)
+                 for link_data in social_links_data]
+            )
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):
@@ -82,10 +75,10 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
     user_followers = serializers.SerializerMethodField()
     user_following = serializers.SerializerMethodField()
 
-    def get_user_followers(self, obj):
+    def get_user_followers(self, obj) -> list:
         return [follower.owner.username for follower in obj.followers.all()]
 
-    def get_user_following(self, obj):
+    def get_user_following(self, obj) -> list:
         return [following.owner.username for following in obj.following.all()]
 
     class Meta:
@@ -165,7 +158,7 @@ class FollowUnfollowSerializer(serializers.ModelSerializer):
         data["user_to_follow_unfollow"] = user_to_follow_unfollow
         return data
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         action = self.validated_data["action"]
         user_to_follow_unfollow = self.validated_data[
             "user_to_follow_unfollow"
@@ -196,3 +189,27 @@ class FollowUnfollowSerializer(serializers.ModelSerializer):
                 )
             user_profile.following.remove(follow_profile)
             user_to_follow_unfollow.profile.followers.remove(user_profile)
+
+
+class PostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "owner",
+            "text",
+            "image",
+            "hashtags",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("owner", "created_at", "updated_at")
+
+
+class PostListSerializer(PostSerializer):
+    owner = serializers.CharField(
+        source="owner.username",
+        read_only=True
+
+    )

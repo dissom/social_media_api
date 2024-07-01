@@ -1,13 +1,17 @@
 from django.db.models import Q
-from rest_framework import generics, viewsets, status
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
-from social.models import UserProfile
+from permissions import IsOwnerOrReadOnly
+from social.models import Post, UserProfile
 from social.serializers import (
     FollowUnfollowSerializer,
+    PostListSerializer,
+    PostSerializer,
     UserProfileDetailSerializer,
     UserProfileListSerializerView,
     UserProfileSerializer,
@@ -18,6 +22,10 @@ class UserProfileView(viewsets.ModelViewSet):
 
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    permission_classes = (
+        IsOwnerOrReadOnly,
+        IsAuthenticated,
+    )
 
     def get_queryset(self):
         """Retrieve porfiles with filters by owner"""
@@ -84,3 +92,41 @@ class FollowUnfollowViewSet(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = (
+        IsOwnerOrReadOnly,
+        IsAuthenticated,
+    )
+
+    def get_queryset(self):
+        """Retrieve posts filtered by following users, with serch by hashtags"""
+        queryset = self.queryset
+        user = self.request.user
+
+        following_users = user.profile.following.values_list(
+            "owner", flat=True
+        )
+        queryset = queryset.filter(
+            Q(owner__in=following_users) | Q(owner=user)
+        )
+
+        hashtag_params = self.request.query_params.get("hashtag")
+
+        if hashtag_params:
+            hashtags_params = hashtag_params.split(",")
+            queryset = queryset.filter(hashtags__in=hashtags_params)
+
+        return queryset.distinct()
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "list":
+            serializer = PostListSerializer
+        return serializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
