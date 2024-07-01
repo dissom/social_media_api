@@ -101,12 +101,11 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ("owner", "creared_at", "updated_at")
 
 
-class UserProfileListSerializerView(serializers.ModelSerializer):
+class UserProfileListSerializer(serializers.ModelSerializer):
     owner = serializers.SlugRelatedField(
         read_only=True,
         slug_field="username"
     )
-    social_links = SocialLinkSerializer(many=True, read_only=True)
     followers_count = serializers.IntegerField(
         read_only=True,
         source="followers.count"
@@ -122,12 +121,7 @@ class UserProfileListSerializerView(serializers.ModelSerializer):
             "id",
             "owner",
             "profile_picture",
-            "bio",
-            "birth_date",
             "location",
-            "website",
-            "phone_number",
-            "social_links",
             "created_at",
             "updated_at",
             "followers_count",
