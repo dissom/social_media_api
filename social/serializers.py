@@ -29,10 +29,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CommentListSerializer(serializers.ModelSerializer):
+    post = serializers.CharField(source="post.title")
 
     class Meta:
         model = Comment
-        fields = ("text", "created_at")
+        fields = ("post", "text", "created_at")
 
 
 class PostSerializer(serializers.ModelSerializer):

@@ -15,13 +15,14 @@ from permissions import IsOwnerOrFollower, IsOwnerOrReadOnly
 from social.models import Comment, Like, Post, UserProfile
 from social.serializers import (
     CommentSerializer,
+    CommentListSerializer,
     FollowUnfollowSerializer,
     LikeSerializer,
-    PostListSerializer,
     PostSerializer,
-    UserProfileDetailSerializer,
-    UserProfileListSerializer,
+    PostListSerializer,
     UserProfileSerializer,
+    UserProfileListSerializer,
+    UserProfileDetailSerializer,
 )
 
 
@@ -169,7 +170,6 @@ class PostViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(hashtags__in=hashtags_params)
 
         if created_at:
-            print(created_at)
             queryset = queryset.filter(created_at__date=created_at)
 
         if updated_at:
@@ -208,7 +208,7 @@ class PostViewSet(viewsets.ModelViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        """Filtering by hashtag"""
+        """Filtering by hashtag, created_at, updated_at"""
         return super().list(request, *args, **kwargs)
 
 
@@ -222,15 +222,54 @@ class CommentViewSet(viewsets.ModelViewSet):
         following_users = user.profile.following.values_list(
             "owner", flat=True
         )
-        print(following_users)
 
         queryset = queryset.filter(
             Q(user__in=following_users) | Q(user=user)
         )
+
+        post_param = self.request.query_params.get("post")
+        text_param = self.request.query_params.get("text")
+
+        if post_param:
+            queryset = queryset.filter(post__title=post_param)
+
+        if text_param:
+            queryset = queryset.filter(text__icontains=text_param)
+
         return queryset
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "list":
+            serializer = CommentListSerializer
+        return serializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="post",
+                type=OpenApiTypes.STR,
+                description=(
+                    "Filter by post title "
+                    "(ex. ?post=post_title)"
+                ),
+            ),
+            OpenApiParameter(
+                name="text",
+                type=OpenApiTypes.STR,
+                description=(
+                    "Filter by text inside post "
+                    "(ex. ?text=example_text)"
+                ),
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        """Filtering by post title and text"""
+        return super().list(request, *args, **kwargs)
 
 
 class LikeViewSet(viewsets.ModelViewSet):
