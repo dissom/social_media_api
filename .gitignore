@@ -398,3 +398,6 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,visualstudiocode,django
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
