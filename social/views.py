@@ -149,14 +149,15 @@ class PostViewSet(viewsets.ModelViewSet):
         """
         Retrieve posts filtered by following users, with search by hashtags
         """
-        queryset = self.queryset
+        queryset = self.queryset.filter(published=True)
         user = self.request.user
 
         following_users = user.profile.following.values_list(
             "owner", flat=True
         )
         queryset = queryset.filter(
-            Q(owner__in=following_users) | Q(owner=user)
+            Q(owner__in=following_users)
+            | Q(owner=user)
         )
 
         hashtag_params = self.request.query_params.get("hashtag")

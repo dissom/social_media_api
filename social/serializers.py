@@ -28,6 +28,13 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ("post", "text", "created_at")
 
 
+class CommentListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ("text", "created_at")
+
+
 class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -39,10 +46,17 @@ class PostSerializer(serializers.ModelSerializer):
             "text",
             "image",
             "hashtags",
+            "published",
+            "publish_date",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("owner", "created_at", "updated_at")
+        read_only_fields = (
+            "owner",
+            "published",
+            "created_at",
+            "updated_at"
+        )
 
 
 class PostListSerializer(serializers.ModelSerializer):
@@ -52,7 +66,7 @@ class PostListSerializer(serializers.ModelSerializer):
     )
     likes = serializers.CharField(read_only=True, source="likes.count")
 
-    comments = CommentSerializer(many=True, read_only=True)
+    comments = CommentListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
@@ -63,12 +77,18 @@ class PostListSerializer(serializers.ModelSerializer):
             "text",
             "hashtags",
             "owner",
+            "published",
             "created_at",
             "updated_at",
             "comments",
             "likes",
         )
-        read_only_fields = ("owner", "created_at", "updated_at")
+        read_only_fields = (
+            "owner",
+            "published",
+            "created_at",
+            "updated_at"
+        )
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

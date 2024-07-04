@@ -95,6 +95,8 @@ class Post(models.Model):
         upload_to=post_image_path
     )
     hashtags = models.CharField(max_length=255, blank=True)
+    publish_date = models.DateField()
+    published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
