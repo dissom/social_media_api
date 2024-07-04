@@ -1,8 +1,14 @@
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from social.models import Post, SocialLink, UserProfile
-from user.models import User
+from social.models import (
+    Comment,
+    Like,
+    Post,
+    SocialLink,
+    UserProfile
+)
 
 
 class SocialLinkSerializer(serializers.ModelSerializer):
@@ -13,6 +19,56 @@ class SocialLinkSerializer(serializers.ModelSerializer):
             "platform",
             "url",
         )
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ("post", "text", "created_at")
+
+
+class PostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "owner",
+            "title",
+            "text",
+            "image",
+            "hashtags",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("owner", "created_at", "updated_at")
+
+
+class PostListSerializer(serializers.ModelSerializer):
+    owner = serializers.CharField(
+        source="owner.username",
+        read_only=True
+    )
+    likes = serializers.CharField(read_only=True, source="likes.count")
+
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = (
+            "id",
+            "title",
+            "image",
+            "text",
+            "hashtags",
+            "owner",
+            "created_at",
+            "updated_at",
+            "comments",
+            "likes",
+        )
+        read_only_fields = ("owner", "created_at", "updated_at")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -72,8 +128,14 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
     owner = serializers.SlugRelatedField(read_only=True, slug_field="username")
     social_links = SocialLinkSerializer(many=True, read_only=True)
 
+    posts = serializers.SerializerMethodField()
+
     user_followers = serializers.SerializerMethodField()
     user_following = serializers.SerializerMethodField()
+
+    def get_posts(self, obj):
+        posts = Post.objects.filter(owner=obj.owner)
+        return [post.title for post in posts]
 
     def get_user_followers(self, obj) -> list:
         return [follower.owner.username for follower in obj.followers.all()]
@@ -97,6 +159,7 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
             "updated_at",
             "user_followers",
             "user_following",
+            "posts",
         )
         read_only_fields = ("owner", "creared_at", "updated_at")
 
@@ -135,7 +198,7 @@ class FollowUnfollowSerializer(serializers.ModelSerializer):
     action = serializers.ChoiceField(choices=["follow", "unfollow"])
 
     class Meta:
-        model = User
+        model = get_user_model()
         fields = (
             "user_id",
             "action",
@@ -143,7 +206,10 @@ class FollowUnfollowSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         data = super(FollowUnfollowSerializer, self).validate(attrs)
-        user_to_follow_unfollow = get_object_or_404(User, pk=attrs["user_id"])
+        user_to_follow_unfollow = get_object_or_404(
+            get_user_model(),
+            pk=attrs["user_id"]
+        )
 
         if user_to_follow_unfollow == self.context["request"].user:
             raise serializers.ValidationError(
@@ -185,25 +251,46 @@ class FollowUnfollowSerializer(serializers.ModelSerializer):
             user_to_follow_unfollow.profile.followers.remove(user_profile)
 
 
-class PostSerializer(serializers.ModelSerializer):
+class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Post
+        model = Like
         fields = (
-            "id",
-            "owner",
-            "text",
-            "image",
-            "hashtags",
-            "created_at",
-            "updated_at",
+            "post",
+            "action",
         )
-        read_only_fields = ("owner", "created_at", "updated_at")
 
+    def validate(self, attrs):
+        data = super(LikeSerializer, self).validate(attrs)
+        post = attrs["post"]
+        action = attrs["action"]
+        user = self.context["request"].user
 
-class PostListSerializer(PostSerializer):
-    owner = serializers.CharField(
-        source="owner.username",
-        read_only=True
+        if action == "like" and Like.objects.filter(
+            user=user,
+            post=post
+        ).exists():
+            raise serializers.ValidationError(
+                "You have already liked this post."
+            )
+        if action == "dislike" and not Like.objects.filter(
+            user=user,
+            post=post
+        ).exists():
+            raise serializers.ValidationError(
+                "You have not liked this post."
+            )
 
-    )
+        return data
+
+    def save(self, **kwargs):
+        action = self.validated_data["action"]
+        post = self.validated_data["post"]
+        user = self.context["request"].user
+
+        if action == "like":
+            Like.objects.create(user=user, post=post, action=action)
+        else:
+            Like.objects.filter(user=user, post=post).delete()
+
+        return post

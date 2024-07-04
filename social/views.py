@@ -12,9 +12,11 @@ from drf_spectacular.utils import (
 )
 
 from permissions import IsOwnerOrFollower, IsOwnerOrReadOnly
-from social.models import Post, UserProfile
+from social.models import Comment, Like, Post, UserProfile
 from social.serializers import (
+    CommentSerializer,
     FollowUnfollowSerializer,
+    LikeSerializer,
     PostListSerializer,
     PostSerializer,
     UserProfileDetailSerializer,
@@ -176,7 +178,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         serializer = self.serializer_class
-        if self.action == "list":
+        if self.action in ("list", "retrieve"):
             serializer = PostListSerializer
         return serializer
 
@@ -207,3 +209,29 @@ class PostViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Filtering by hashtag"""
         return super().list(request, *args, **kwargs)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all().select_related()
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        user = self.request.user
+        following_users = user.profile.following.values_list(
+            "owner", flat=True
+        )
+        print(following_users)
+
+        queryset = queryset.filter(
+            Q(user__in=following_users) | Q(user=user)
+        )
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class LikeViewSet(viewsets.ModelViewSet):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer

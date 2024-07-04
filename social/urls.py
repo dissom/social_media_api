@@ -1,7 +1,9 @@
 from django.urls import path, include
 from rest_framework import routers
 from social.views import (
+    CommentViewSet,
     FollowUnfollowView,
+    LikeViewSet,
     PostViewSet,
     UserProfileView,
 )
@@ -10,6 +12,8 @@ from social.views import (
 router = routers.DefaultRouter()
 router.register("profiles", UserProfileView, basename="profile")
 router.register("posts", PostViewSet)
+router.register("comments", CommentViewSet)
+router.register("likes", LikeViewSet, basename="like")
 
 
 urlpatterns = [
