@@ -88,4 +88,4 @@ create an .env file in the root directory of project:
 
 docker-compose build
 docker-compose up
-- Create new admin user. `docker-compose run app sh -c "python manage.py createsuperuser`;
+- Create new admin user. `docker-compose exec social_media_api_app python manage.py createsuperuser`;
