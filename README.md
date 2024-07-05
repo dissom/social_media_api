@@ -90,4 +90,6 @@ create an .env file in the root directory of project:
 docker-compose build
 docker-compose up
 - Create new admin user. `docker-compose exec social_media_api_app python manage.py createsuperuser`;
+
+(The API will be available at `http://127.0.0.1:4000/`.)
 ```
