@@ -35,7 +35,7 @@ Before you can run this project, make sure you have the following installed:
 
 # Running the API with Python
 
-git clone https://github.com/dissom/social_media_api.git
+git clone `https://github.com/dissom/social_media_api.git`
 cd social_media_api
 python3 -m venv venv
 source venv/bin/activate (on macOS)
@@ -47,31 +47,31 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 
-(The API will be available at http://127.0.0.1:8000/.)
+(The API will be available at `http://127.0.0.1:8000/`.)
 
 # Start Celery Worker:
 
-celery -A social_media_api worker -l INFO
+`celery -A social_media_api worker -l INFO`
 
 # Start Celery Beat:
 
-celery -A social_media_api beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+`celery -A social_media_api beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler`
 
 # Start Flower for Monitoring:
 
-celery -A social_media_api flower --address=0.0.0.0
+`celery -A social_media_api flower --address=0.0.0.0`
 
 
 
 # API Documentation:
 
 Detailed API documentation and usage examples are
-available at http://127.0.0.1:8000/api/doc/swagger/.
+available at `http://127.0.0.1:8000/api/doc/swagger/`.
 
 
 # Running the API with Docker
 
-git clone https://github.com/dissom/social_media_api.git
+git clone `https://github.com/dissom/social_media_api.git`
 cd social_media_api
 
 create an .env file in the root directory of project:
