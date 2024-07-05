@@ -34,7 +34,7 @@ Before you can run this project, make sure you have the following installed:
 ## Instalation
 
 # Running the API with Python
-
+```shell
 - git clone `https://github.com/dissom/social_media_api.git`
 - cd social_media_api
 - python3 -m venv venv
@@ -48,6 +48,7 @@ Before you can run this project, make sure you have the following installed:
 - python manage.py runserver
 
 (The API will be available at `http://127.0.0.1:8000/`.)
+```
 
 # Start Celery Worker:
 
@@ -70,7 +71,7 @@ available at `http://127.0.0.1:8000/api/doc/swagger/`.
 
 
 # Running the API with Docker
-
+```shell
 git clone `https://github.com/dissom/social_media_api.git`
 cd social_media_api
 
@@ -89,3 +90,4 @@ create an .env file in the root directory of project:
 docker-compose build
 docker-compose up
 - Create new admin user. `docker-compose exec social_media_api_app python manage.py createsuperuser`;
+```
