@@ -50,7 +50,6 @@ class UserProfileView(viewsets.ModelViewSet):
         location = self.request.query_params.get("location")
         if owner:
             owner = owner.split(",")
-            print(owner)
             queryset = queryset.filter(owner__username__in=owner)
 
         if birth_date:
@@ -60,6 +59,17 @@ class UserProfileView(viewsets.ModelViewSet):
             queryset = queryset.filter(location__icontains=location)
 
         return queryset
+
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.action == "retrieve":
+            serializer = UserProfileDetailSerializer
+        if self.action == "list":
+            serializer = UserProfileListSerializer
+        return serializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
     @extend_schema(
         parameters=[
@@ -84,17 +94,6 @@ class UserProfileView(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Filtering by owner, birth_date, location"""
         return super().list(request, *args, **kwargs)
-
-    def get_serializer_class(self):
-        serializer = self.serializer_class
-        if self.action == "retrieve":
-            serializer = UserProfileDetailSerializer
-        if self.action == "list":
-            serializer = UserProfileListSerializer
-        return serializer
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
 
     @action(
         methods=["POST"],
