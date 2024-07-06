@@ -56,13 +56,13 @@ class UserLogoutAPIView(APIView):
 
 
 class ManageUserView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = UserDetailSerializer
+    serializer_class = UserSerializer
 
     def get_object(self):
         return self.request.user
 
-    # def get_serializer_class(self):
-    #     serializer = self.serializer_class
-    #     if self.request.method == "retrieve":
-    #         serializer = UserDetailSerializer
-    #     return serializer
+    def get_serializer_class(self):
+        serializer = self.serializer_class
+        if self.request.method == "retrieve":
+            serializer = UserDetailSerializer
+        return serializer

@@ -114,9 +114,3 @@ class UserLoginSerializer(serializers.ModelSerializer):
                 "style": {"input_type": "password"},
             }
         }
-
-
-class UserFollowingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "username")
